@@ -1,15 +1,11 @@
 name = "new-bybit"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
-node_compat = true
-
-# Account details (optional - secrets se bhi kaam chalega)
-# account_id = "your_account_id_here"
+compatibility_flags = ["nodejs_compat"]
 
 [env.production]
 name = "new-bybit"
 workers_dev = true
 
-# Environment variables declaration (actual values Cloudflare dashboard mein)
 [vars]
 ENVIRONMENT = "production"
