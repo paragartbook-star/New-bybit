@@ -10,6 +10,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Deploy Worker
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,8 +24,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build TypeScript
+        run: npm run build
+
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          config: wrangler.toml
+        env:
+          ENVIRONMENT: production
