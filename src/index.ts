@@ -1,19 +1,19 @@
 /**
  * TradingView to Bybit Automated Trading Bot
- * Version: 2.3 (Pro Version - Optimized for Cloudflare)
+ * Version: 2.3 (Fixed & Optimized)
  */
 
 export interface Env {
   BYBIT_API_KEY: string;
-  BYBIT_SECRET: string; // Dashboard mein check karein: BYBIT_SECRET hi hona chahiye
+  BYBIT_SECRET: string;
 }
 
 interface TradingViewAlert {
   action: 'BUY' | 'SELL';
   symbol: string;
   price: number;
-  sl?: number;   // Optional (Bot crash nahi hoga agar TV se SL na aaye)
-  tp?: number;   // Optional
+  sl?: number;   // '?' lagane se optional ho gaya
+  tp?: number;
   qty: number;
   category?: 'spot' | 'linear'; 
 }
@@ -30,19 +30,18 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders });
 
     if (request.method !== 'POST') {
-      return new Response(JSON.stringify({ success: false, error: 'POST method required' }), { status: 405, headers: corsHeaders });
+      return new Response(JSON.stringify({ success: false, error: 'POST required' }), { status: 405, headers: corsHeaders });
     }
 
     try {
       const alertData = await request.json() as TradingViewAlert;
       console.log('📥 Webhook Received:', JSON.stringify(alertData));
 
-      // 1. Mandatory Fields Check
+      // Mandatory Data Validation
       if (!alertData.action || !alertData.symbol || !alertData.qty) {
-        throw new Error('Missing Data: Action, Symbol and Qty are required.');
+        throw new Error('Missing Required Fields (action, symbol, or qty)');
       }
 
-      // 2. Execute on Bybit
       const result = await placeBybitOrder(alertData, env);
       console.log('📤 Bybit Response:', JSON.stringify(result));
 
@@ -68,13 +67,14 @@ async function placeBybitOrder(alert: TradingViewAlert, env: Env) {
     timeInForce: 'GTC'
   };
 
+  // Only add SL/TP if they exist in the alert
   if (alert.sl) orderParams.stopLoss = alert.sl.toString();
   if (alert.tp) orderParams.takeProfit = alert.tp.toString();
 
   const rawBody = JSON.stringify(orderParams);
   const paramString = timestamp + env.BYBIT_API_KEY + recvWindow + rawBody;
   
-  // High-Speed Signature Generation
+  // Fast Signature Generation
   const signature = await generateHMAC(paramString, env.BYBIT_SECRET);
 
   const response = await fetch('https://api.bybit.com/v5/order/create', {
@@ -95,6 +95,6 @@ async function placeBybitOrder(alert: TradingViewAlert, env: Env) {
 async function generateHMAC(message: string, secret: string): Promise<string> {
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  const signature = await crypto.subtle.sign('HMAC', key, enc.encode(message));
-  return Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, '0')).join('');
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
