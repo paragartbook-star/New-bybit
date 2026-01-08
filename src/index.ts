@@ -13,10 +13,9 @@ interface TradingViewAlert {
   action: 'BUY' | 'SELL';
   symbol: string;
   price: number;
-  sl: number;
-  tp: number;
+  sl?: number; // '?' lagane se ye optional ho jayega
+  tp?: number; // '?' lagane se ye optional ho jayega
   qty: number;
-  // Additional fields (Optional)
   category?: 'spot' | 'linear'; 
 }
 
