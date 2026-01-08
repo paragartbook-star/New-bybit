@@ -12,11 +12,8 @@
     "strict": true,
     "noEmit": true,
     "types": ["@cloudflare/workers-types"],
-    "baseUrl": ".",
-    "paths": {
-      "*": ["*"]
-    }
+    "jsx": "react"
   },
-  "include": ["./**/*.ts"],
-  "exclude": ["node_modules", "dist", ".wrangler"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

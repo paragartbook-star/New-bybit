@@ -2,14 +2,13 @@
   "name": "tradingview-bybit-bot",
   "version": "1.0.0",
   "description": "Automated trading bot connecting TradingView alerts to Bybit exchange",
-  "main": "index.ts",
+  "main": "src/index.ts",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "build": "tsc",
-    "start": "wrangler dev",
-    "publish": "wrangler publish"
+    "start": "wrangler dev"
   },
   "author": "Durga Jewellers",
   "license": "MIT",
@@ -18,7 +17,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250106.0",
-    "wrangler": "^3.114.16",
+    "wrangler": "^3.101.0",
     "typescript": "^5.7.3"
   }
 }

@@ -1,14 +1,11 @@
 name = "new-bybit"
-main = "index.ts"
+main = "src/index.ts"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
 [env.production]
 name = "new-bybit"
-
-[[env.production.routes]]
-pattern = "*"
-zone_name = ""
+workers_dev = true
 
 [vars]
 ENVIRONMENT = "production"
