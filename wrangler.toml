@@ -5,7 +5,10 @@ compatibility_flags = ["nodejs_compat"]
 
 [env.production]
 name = "new-bybit"
-workers_dev = true
+
+[[env.production.routes]]
+pattern = "*"
+zone_name = ""
 
 [vars]
 ENVIRONMENT = "production"
