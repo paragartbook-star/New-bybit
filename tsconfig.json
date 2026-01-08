@@ -11,9 +11,8 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noEmit": true,
-    "types": ["@cloudflare/workers-types"],
-    "jsx": "react"
+    "types": ["@cloudflare/workers-types"]
   },
-  "include": ["src/**/*"],
+  "include": ["./**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
