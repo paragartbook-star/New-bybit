@@ -2,7 +2,7 @@
   "name": "tradingview-bybit-bot",
   "version": "1.0.0",
   "description": "Automated trading bot connecting TradingView alerts to Bybit exchange",
-  "main": "src/index.ts",
+  "main": "index.ts",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
