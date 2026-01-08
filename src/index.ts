@@ -1,19 +1,19 @@
 /**
  * TradingView to Bybit Automated Trading Bot
- * Version: 2.2 (Fixed Interface & Variables)
+ * Version: 2.3 (Full Professional Version)
  */
 
 export interface Env {
   BYBIT_API_KEY: string;
-  BYBIT_SECRET: string; // Dashboard mein bhi yahi naam rakhein
+  BYBIT_SECRET: string;
 }
 
 interface TradingViewAlert {
   action: 'BUY' | 'SELL';
   symbol: string;
   price: number;
-  sl?: number;   // '?' lagane se optional ho gaya
-  tp?: number;   // '?' lagane se optional ho gaya
+  sl?: number;   // Optional (Bot crash nahi hoga)
+  tp?: number;   // Optional
   qty: number;
   category?: 'spot' | 'linear'; 
 }
@@ -21,41 +21,65 @@ interface TradingViewAlert {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const corsHeaders = {
-      'Access-Control-Allow-Origin': '*',\
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',\
-      'Access-Control-Allow-Headers': 'Content-Type',\
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
       'Content-Type': 'application/json',
     };
 
-    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders });
+    // Handle Preflight (CORS)
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: corsHeaders });
+    }
 
+    // Security: Only POST allowed
     if (request.method !== 'POST') {
-      return new Response(JSON.stringify({ success: false, error: 'Use POST method' }), { status: 405, headers: corsHeaders });
+      return new Response(JSON.stringify({ success: false, error: 'Please use POST' }), { 
+        status: 405, 
+        headers: corsHeaders 
+      });
     }
 
     try {
       const alertData = await request.json() as TradingViewAlert;
-      
-      // Basic Validation
+      console.log('📥 New Alert Received:', JSON.stringify(alertData));
+
+      // 1. Validation Logic
       if (!alertData.action || !alertData.symbol || !alertData.qty) {
-        return new Response(JSON.stringify({ success: false, error: 'Missing parameters' }), { status: 400, headers: corsHeaders });
+        throw new Error('Missing Required Fields: action, symbol, or qty');
       }
 
-      const result = await placeBybitOrder(alertData, env);
-      return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
+      // 2. Execute Order on Bybit
+      const bybitResponse = await placeBybitOrder(alertData, env);
+      
+      console.log('📤 Bybit Response:', JSON.stringify(bybitResponse));
+
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: 'Order Processed',
+        bybit: bybitResponse 
+      }), { headers: corsHeaders });
 
     } catch (error: any) {
-      return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: corsHeaders });
+      console.error('❌ Error:', error.message);
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: error.message 
+      }), { status: 500, headers: corsHeaders });
     }
   }
 };
 
+/**
+ * Bybit API V5 Order Function
+ */
 async function placeBybitOrder(alert: TradingViewAlert, env: Env) {
   const timestamp = Date.now().toString();
   const recvWindow = '5000';
   
+  // Bybit V5 Parameters
   const orderParams: any = {
-    category: alert.category || 'linear',
+    category: alert.category || 'linear', // Default to Futures
     symbol: alert.symbol,
     side: alert.action === 'BUY' ? 'Buy' : 'Sell',
     orderType: 'Market',
@@ -63,21 +87,20 @@ async function placeBybitOrder(alert: TradingViewAlert, env: Env) {
     timeInForce: 'GTC'
   };
 
+  // Add SL/TP only if they are sent from TradingView
   if (alert.sl) orderParams.stopLoss = alert.sl.toString();
   if (alert.tp) orderParams.takeProfit = alert.tp.toString();
 
   const rawBody = JSON.stringify(orderParams);
+  
+  // Create Signature (Standard V5 Rule)
   const paramString = timestamp + env.BYBIT_API_KEY + recvWindow + rawBody;
   
-  // Signature Generation
-  const encoder = new TextEncoder();
-  const keyBuffer = encoder.encode(env.BYBIT_SECRET);
-  const msgBuffer = encoder.encode(paramString);
-  const cryptoKey = await crypto.subtle.importKey('raw', keyBuffer, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, msgBuffer);
-  const signature = Array.from(new Uint8Array(signatureBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+  const signature = await generateSignature(paramString, env.BYBIT_SECRET);
 
-  const response = await fetch('https://api.bybit.com/v5/order/create', {
+  const url = 'https://api.bybit.com/v5/order/create';
+  
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'X-BAPI-API-KEY': env.BYBIT_API_KEY,
@@ -90,4 +113,28 @@ async function placeBybitOrder(alert: TradingViewAlert, env: Env) {
   });
 
   return await response.json();
+}
+
+/**
+ * HMAC-SHA256 Helper (Optimized for Cloudflare)
+ */
+async function generateSignature(message: string, secret: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyUint8 = encoder.encode(secret);
+  const messageUint8 = encoder.encode(message);
+
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw', 
+    keyUint8, 
+    { name: 'HMAC', hash: 'SHA-256' }, 
+    false, 
+    ['sign']
+  );
+
+  const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, messageUint8);
+  
+  // Convert Buffer to Hex String
+  return Array.from(new Uint8Array(signatureBuffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
 }
