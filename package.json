@@ -3,23 +3,41 @@
   "version": "1.0.0",
   "description": "Automated trading bot connecting TradingView alerts to Bybit exchange",
   "main": "src/index.ts",
+  "type": "module",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "tail": "wrangler tail"
+    "tail": "wrangler tail",
+    "start": "wrangler dev",
+    "publish": "wrangler deploy --minify"
   },
   "keywords": [
     "cloudflare",
     "workers",
     "bybit",
     "tradingview",
-    "trading-bot"
+    "trading-bot",
+    "automated-trading",
+    "webhook"
   ],
   "author": "Durga Jewellers",
   "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20241127.0",
-    "wrangler": "^3.94.0",
-    "typescript": "^5.7.2"
-  }
+    "@cloudflare/workers-types": "^4.20250106.0",
+    "wrangler": "^3.96.0",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/paragartbook-star/New-bybit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/paragartbook-star/New-bybit/issues"
+  },
+  "homepage": "https://github.com/paragartbook-star/New-bybit#readme"
 }
